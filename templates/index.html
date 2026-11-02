@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>TaskBoard · Compose Demo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}" aria-label="TaskBoard home">
+      <span class="brand-mark">T</span><span>TaskBoard</span>
+    </a>
+    <span class="environment"><span class="pulse"></span> Docker Compose demo</span>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <p class="eyebrow">MULTI-CONTAINER APPLICATION</p>
+      <h1>Your work, <span>in one place.</span></h1>
+      <p class="subheading">A lightweight task manager powered by Flask and PostgreSQL, running as two connected Docker Compose services.</p>
+    </section>
+
+    <section class="stats" aria-label="Task summary">
+      <article class="stat-card"><span class="stat-label">All tasks</span><strong>{{ total }}</strong><span class="stat-note">Saved in PostgreSQL</span></article>
+      <article class="stat-card"><span class="stat-label">To do</span><strong>{{ pending }}</strong><span class="stat-note">Ready to work on</span></article>
+      <article class="stat-card"><span class="stat-label">Completed</span><strong>{{ completed }}</strong><span class="stat-note">Progress made</span></article>
+    </section>
+
+    <section class="board">
+      <div class="board-heading">
+        <div><p class="eyebrow">YOUR WORKSPACE</p><h2>Task list</h2></div>
+        <span class="db-status"><span class="pulse"></span> Database connected</span>
+      </div>
+
+      <form class="add-form" action="{{ url_for('add_task') }}" method="post">
+        <label class="sr-only" for="task-title">New task</label>
+        <input id="task-title" name="title" type="text" maxlength="160" placeholder="What needs to get done?" autocomplete="off" required>
+        <button type="submit">Add task <span aria-hidden="true">＋</span></button>
+      </form>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="messages" aria-live="polite">
+            {% for category, message in messages %}<p class="message {{ category }}">{{ message }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% if tasks %}
+        <ul class="task-list">
+          {% for task in tasks %}
+            <li class="task-row {% if task.completed %}is-complete{% endif %}">
+              <form action="{{ url_for('toggle_task', task_id=task.id) }}" method="post">
+                <button class="check-button" type="submit" aria-label="{% if task.completed %}Mark {{ task.title }} as not completed{% else %}Mark {{ task.title }} as completed{% endif %}">{% if task.completed %}✓{% endif %}</button>
+              </form>
+              <span class="task-title">{{ task.title }}</span>
+              <span class="task-state">{% if task.completed %}Done{% else %}In progress{% endif %}</span>
+              <form action="{{ url_for('delete_task', task_id=task.id) }}" method="post">
+                <button class="delete-button" type="submit" aria-label="Delete {{ task.title }}">×</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="empty-state"><div class="empty-icon">✓</div><h3>Your list is clear</h3><p>Add your first task above. It will be stored in the PostgreSQL database.</p></div>
+      {% endif %}
+    </section>
+
+    <section class="architecture" aria-label="Application architecture">
+      <div><span class="architecture-icon">WEB</span><div><strong>Flask web service</strong><small>Host port 8081 · container port 5000</small></div></div>
+      <span class="connection" aria-hidden="true">↔</span>
+      <div><span class="architecture-icon database-icon">DB</span><div><strong>PostgreSQL service</strong><small>Internal port 5432 · named volume</small></div></div>
+    </section>
+    <footer>TaskBoard · Demonstration of a web + database stack managed with Docker Compose</footer>
+  </main>
+</body>
+</html>
